@@ -60,6 +60,11 @@ func main() {
 	<-ctx.Done()
 	log.Info("shutting down")
 
+	// Close WebSocket connections first. http.Server.Shutdown neither waits for
+	// nor closes hijacked connections, so without this clients are cut off
+	// abruptly instead of receiving a close frame.
+	h.CloseAll()
+
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(shutdownCtx); err != nil {

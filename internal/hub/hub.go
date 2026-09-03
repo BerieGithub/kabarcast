@@ -128,11 +128,32 @@ func (h *Hub) Deliver(ev Event) int {
 	return sent
 }
 
+// CloseAll closes every local connection.
+//
+// Called during shutdown: Go's http.Server.Shutdown does NOT wait for or close
+// hijacked connections, and a WebSocket upgrade hijacks. Without this, sockets
+// are severed abruptly when the process exits instead of receiving a close
+// frame, so clients cannot tell a deploy from a network failure.
+func (h *Hub) CloseAll() {
+	h.mu.Lock()
+	clients := make([]*Client, 0, len(h.clients))
+	for c := range h.clients {
+		clients = append(clients, c)
+	}
+	h.mu.Unlock()
+
+	// Closing the send channel makes each write pump emit a close frame and
+	// exit; the read pump then unwinds and deregisters the client.
+	for _, c := range clients {
+		c.closeSend()
+	}
+}
+
 type Stats struct {
-	Connections   int    `json:"connections"`
-	Channels      int    `json:"channels"`
-	Delivered     uint64 `json:"delivered"`
-	DroppedSlow   uint64 `json:"dropped_slow_consumers"`
+	Connections int    `json:"connections"`
+	Channels    int    `json:"channels"`
+	Delivered   uint64 `json:"delivered"`
+	DroppedSlow uint64 `json:"dropped_slow_consumers"`
 }
 
 func (h *Hub) Stats() Stats {

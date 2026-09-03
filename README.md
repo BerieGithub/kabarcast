@@ -42,7 +42,8 @@ Three properties fall out of this design:
 - **No shared database.** The hub verifies a signature; it never reads your
   users, tenants or permissions.
 - **No sticky sessions.** Any client may land on any instance, because every
-  instance receives every event from Redis.
+  instance receives every event from Redis. This is covered by a test that
+  publishes to one instance and asserts delivery to a client held by another.
 - **Fail soft.** If the hub is down, your app still works. The durable copy of
   anything that matters is already in your database; kabarcast only makes
   delivery immediate.
@@ -104,8 +105,9 @@ Server to client:
 ## HTTP API
 
 ```
-GET  /healthz     liveness
+GET  /healthz     liveness (public)
 GET  /stats       connections, channels, delivered, slow-consumer drops
+                  (Authorization: Bearer <service secret>)
 GET  /v1/ws       WebSocket upgrade (?token=<channel token>)
 POST /v1/publish  broadcast an event (Authorization: Bearer <service secret>)
 ```
@@ -187,6 +189,8 @@ and automatic re-subscription. See its
 - [x] Heartbeats, slow-consumer backpressure, graceful shutdown
 - [ ] Presence (who is on a channel)
 - [ ] Short replay buffer for brief reconnects
+- [x] Graceful WebSocket drain on shutdown
+- [x] CI: build, vet, gofmt, race tests, Docker build
 - [ ] Prometheus metrics endpoint
 - [x] TypeScript client SDK (`@kabarcast/client`)
 - [ ] Python publisher SDK (`kabarcast`)

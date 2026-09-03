@@ -165,3 +165,30 @@ func TestPublishRequiresServiceSecret(t *testing.T) {
 		t.Fatalf("want 401, got %d", resp.StatusCode)
 	}
 }
+
+func TestStatsRequiresServiceSecret(t *testing.T) {
+	srv, _ := newTestServer(t)
+	defer srv.Close()
+
+	// Unauthenticated: connection counts leak tenant activity, so this is
+	// not a public endpoint.
+	resp, err := http.Get(srv.URL + "/stats")
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("want 401 without secret, got %d", resp.StatusCode)
+	}
+
+	req, _ := http.NewRequest(http.MethodGet, srv.URL+"/stats", nil)
+	req.Header.Set("Authorization", "Bearer "+serviceSecret)
+	authed, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("get authed: %v", err)
+	}
+	defer authed.Body.Close()
+	if authed.StatusCode != http.StatusOK {
+		t.Fatalf("want 200 with secret, got %d", authed.StatusCode)
+	}
+}

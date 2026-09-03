@@ -59,7 +59,14 @@ func (s *Server) handleHealth(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
-func (s *Server) handleStats(w http.ResponseWriter, _ *http.Request) {
+// handleStats reports connection and delivery counters. It requires the
+// service secret: connection counts per channel leak tenant activity, so this
+// is not public.
+func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
+	if !auth.ValidServiceSecret(bearer(r), s.cfg.ServiceSecret) {
+		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid service secret"})
+		return
+	}
 	writeJSON(w, http.StatusOK, s.hub.Stats())
 }
 
