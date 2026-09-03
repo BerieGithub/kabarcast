@@ -24,3 +24,7 @@ Thumbs.db
 # Go workspace
 go.work
 go.work.sum
+
+# TypeScript SDK
+clients/typescript/node_modules/
+clients/typescript/dist/
