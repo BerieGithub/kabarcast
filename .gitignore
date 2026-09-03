@@ -1,0 +1,26 @@
+# Binaries
+/bin/
+kabarcast
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test / coverage
+*.test
+*.out
+coverage.*
+
+# Env
+.env
+.env.local
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Go workspace
+go.work
+go.work.sum

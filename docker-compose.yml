@@ -1,0 +1,24 @@
+services:
+  kabarcast:
+    build: .
+    container_name: kabarcast
+    ports:
+      - "8080:8080"
+    environment:
+      KABARCAST_ADDR: ":8080"
+      KABARCAST_CLIENT_TOKEN_SECRET: ${KABARCAST_CLIENT_TOKEN_SECRET:-dev-client-secret}
+      KABARCAST_SERVICE_SECRET: ${KABARCAST_SERVICE_SECRET:-dev-service-secret}
+      KABARCAST_REDIS_URL: redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: kabarcast_redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
