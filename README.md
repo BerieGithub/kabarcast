@@ -168,6 +168,18 @@ client cannot keep up and the buffer fills, it is **disconnected** rather than
 allowed to grow the heap without bound. One slow consumer must never degrade
 delivery for everyone else; the client reconnects and resumes.
 
+## Clients
+
+| Package | Location | Status |
+|---|---|---|
+| `@kabarcast/client` (TypeScript) | [`clients/typescript`](clients/typescript) | usable |
+| `kabarcast` (Python publisher) | - | planned |
+| Dart client (Flutter) | - | planned |
+
+The TypeScript client handles token refresh, reconnect with jittered backoff
+and automatic re-subscription. See its
+[README](clients/typescript/README.md).
+
 ## Roadmap
 
 - [x] WebSocket transport, channel-scoped token auth
@@ -176,7 +188,7 @@ delivery for everyone else; the client reconnects and resumes.
 - [ ] Presence (who is on a channel)
 - [ ] Short replay buffer for brief reconnects
 - [ ] Prometheus metrics endpoint
-- [ ] TypeScript client SDK (`@kabarcast/client`)
+- [x] TypeScript client SDK (`@kabarcast/client`)
 - [ ] Python publisher SDK (`kabarcast`)
 - [ ] Dart client for Flutter
 - [ ] Load test to 10k concurrent connections
