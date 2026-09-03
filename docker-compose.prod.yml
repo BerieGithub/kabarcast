@@ -1,0 +1,31 @@
+# Production deployment.
+#
+# kabarcast joins an existing external network so the reverse proxy in front of
+# it can reach the container by service name. It publishes NO host ports: the
+# only way in is through the proxy, which terminates TLS.
+#
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Set KABARCAST_NETWORK to the network your proxy is attached to.
+services:
+  kabarcast:
+    build: .
+    image: kabarcast:latest
+    container_name: kabarcast
+    restart: unless-stopped
+    environment:
+      KABARCAST_ADDR: ":8080"
+      KABARCAST_CLIENT_TOKEN_SECRET: ${KABARCAST_CLIENT_TOKEN_SECRET:?set in .env}
+      KABARCAST_SERVICE_SECRET: ${KABARCAST_SERVICE_SECRET:?set in .env}
+      # Empty = single instance, delivering from memory. Point this at Redis
+      # when you run more than one replica, so events reach clients held by
+      # sibling instances.
+      KABARCAST_REDIS_URL: ${KABARCAST_REDIS_URL:-}
+      KABARCAST_SEND_BUFFER: ${KABARCAST_SEND_BUFFER:-256}
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
+    name: ${KABARCAST_NETWORK:-ssap-v2_ssap-network}
