@@ -174,7 +174,7 @@ delivery for everyone else; the client reconnects and resumes.
 
 | Package | Location | Status |
 |---|---|---|
-| `@kabarcast/client` (TypeScript) | [`clients/typescript`](clients/typescript) | usable |
+| `@diugemi/kabarcast-client` (TypeScript) | [`clients/typescript`](clients/typescript) | usable |
 | `kabarcast` (Python publisher) | - | planned |
 | Dart client (Flutter) | - | planned |
 
@@ -192,7 +192,7 @@ and automatic re-subscription. See its
 - [x] Graceful WebSocket drain on shutdown
 - [x] CI: build, vet, gofmt, race tests, Docker build
 - [ ] Prometheus metrics endpoint
-- [x] TypeScript client SDK (`@kabarcast/client`)
+- [x] TypeScript client SDK (`@diugemi/kabarcast-client`)
 - [ ] Python publisher SDK (`kabarcast`)
 - [ ] Dart client for Flutter
 - [ ] Load test to 10k concurrent connections

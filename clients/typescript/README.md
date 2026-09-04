@@ -1,4 +1,4 @@
-# @kabarcast/client
+# @diugemi/kabarcast-client
 
 TypeScript client for [kabarcast](https://github.com/BerieGithub/kabarcast) -
 realtime message broadcasting with channel-scoped auth and automatic reconnect.
@@ -6,13 +6,13 @@ realtime message broadcasting with channel-scoped auth and automatic reconnect.
 Works in the browser, and in Node 22+ (which ships a global `WebSocket`).
 
 ```bash
-npm install @kabarcast/client
+npm install @diugemi/kabarcast-client
 ```
 
 ## Usage
 
 ```ts
-import { KabarcastClient } from '@kabarcast/client';
+import { KabarcastClient } from '@diugemi/kabarcast-client';
 
 const kabar = new KabarcastClient({
   url: import.meta.env.VITE_KABARCAST_URL,      // wss://kabarcast.example.com

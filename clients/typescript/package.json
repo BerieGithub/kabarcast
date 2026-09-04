@@ -1,5 +1,5 @@
 {
-  "name": "@kabarcast/client",
+  "name": "@diugemi/kabarcast-client",
   "version": "0.1.0",
   "description": "TypeScript client for kabarcast - realtime message broadcasting with channel-scoped auth and automatic reconnect.",
   "license": "MIT",
@@ -14,7 +14,10 @@
       "require": "./dist/index.cjs"
     }
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "sideEffects": false,
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts --clean --sourcemap",
@@ -23,8 +26,13 @@
     "prepublishOnly": "npm run build"
   },
   "keywords": [
-    "websocket", "realtime", "pubsub", "broadcast", "kabarcast",
-    "notifications", "sdk"
+    "websocket",
+    "realtime",
+    "pubsub",
+    "broadcast",
+    "kabarcast",
+    "notifications",
+    "sdk"
   ],
   "repository": {
     "type": "git",
@@ -36,5 +44,7 @@
     "typescript": "^5.7.2",
     "ws": "^8.18.0"
   },
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=18"
+  }
 }
