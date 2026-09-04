@@ -2,21 +2,89 @@
 
 > Realtime message broadcasting for multi-tenant applications.
 
+[![npm](https://img.shields.io/npm/v/@diugemi/kabarcast-client)](https://www.npmjs.com/package/@diugemi/kabarcast-client)
+[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
 Your backend does one HTTP `POST /v1/publish`; kabarcast fans it out over
 WebSocket to every subscribed client, across as many instances as you run.
 Clients authenticate with short-lived, channel-scoped tokens issued by *your*
 app, so kabarcast never touches your database.
 
-## Why this exists
+```bash
+npm install @diugemi/kabarcast-client
+```
 
-Application servers are bad at holding thousands of persistent connections.
-Each one pins memory and, on a synchronous worker model, occupies a worker.
-Scaling connection count then forces you to scale request throughput with it,
-even though the two have nothing to do with each other.
+---
 
-kabarcast owns the stateful connections so your API stays stateless and the
-two scale independently. Your app keeps doing what it is good at: short HTTP
-requests and writing to its database.
+## What is this? (plain English)
+
+Imagine a web app where something happens on the server that a user should
+know about immediately: a document gets approved, a task is assigned to them,
+a delivery arrives.
+
+**The usual way is for the browser to keep asking.** Every 30 seconds it
+pings the server: *"anything new for me?"* Almost every time the answer is
+"no". It is like ordering food, then walking up to the counter every 30
+seconds to ask whether it is ready. Most trips are wasted, the staff get
+interrupted constantly, and when your food *is* ready you might still stand
+around for another 30 seconds before you find out.
+
+**kabarcast is the pager they hand you instead.** You sit down. The moment
+your order is ready, it buzzes. No repeated trips, and the news reaches you in
+under a second rather than up to thirty.
+
+A few things follow naturally from that picture:
+
+- **Your pager only buzzes for your order.** Each user gets a pass that names
+  exactly which messages they are allowed to receive, so one customer can
+  never be alerted about another customer's order. In a system serving many
+  companies, that separation is the whole ballgame.
+- **The restaurant does not make the chefs run the pagers.** Handing out
+  thousands of pagers and keeping them all connected is a completely different
+  job from cooking. So it gets its own dedicated system, which is why
+  kabarcast runs as a separate service rather than being bolted onto the app.
+- **If the pager system breaks, you still get your food.** Nothing is lost,
+  because the order was written down when it was placed. You just go back to
+  walking up to the counter. kabarcast makes delivery *fast*; it is never the
+  thing that makes delivery *happen*.
+
+## What is this? (for engineers)
+
+kabarcast is a standalone WebSocket fan-out service. Your application servers
+stay stateless and keep doing short HTTP requests; kabarcast owns the
+long-lived connections.
+
+The problem it solves: application servers are poor at holding thousands of
+persistent connections. Each connection pins memory and, on a synchronous
+worker model, occupies a worker. Scaling connection count then forces you to
+scale request throughput alongside it, even though the two are unrelated.
+Splitting them lets each scale on its own axis.
+
+How it works:
+
+1. A browser asks **its own backend** for a short-lived JWT that lists the
+   channels it may subscribe to.
+2. It opens a WebSocket to kabarcast with that token. kabarcast **verifies the
+   signature only** - it performs no I/O and never reads your database.
+3. Your backend `POST`s an event to `/v1/publish` with a service secret.
+4. kabarcast fans it out to every subscriber of that channel, across every
+   instance, via Redis pub/sub.
+
+Design commitments worth knowing before you adopt it:
+
+- **Delivery is at-most-once and best effort.** The durable copy of anything
+  that matters stays in your database. kabarcast is an accelerator, not a
+  system of record, so a hub outage degrades latency rather than correctness.
+- **Tenant isolation lives in the token.** A channel grant is only ever what
+  your app signed, so a user cannot subscribe to another tenant's channel
+  regardless of what their client sends. This is covered by tests.
+- **Slow consumers get disconnected, not buffered.** Each connection has a
+  bounded outbound queue; a client that cannot keep up is dropped and
+  reconnects, rather than growing the process heap without bound.
+- **No sticky sessions.** Any client can land on any instance.
+
+Currently running in production behind Caddy, serving a multi-tenant
+compliance platform.
 
 ## Architecture
 
@@ -77,11 +145,14 @@ namespace. Keep the TTL short (60s to 5 min); clients refresh on reconnect.
 Namespacing is what makes multi-tenancy structural rather than incidental:
 
 ```
-ssap:user:<user_id>                     personal notifications
-ssap:company:<company_id>:assessments   team-wide events
-rbst:mill:<mill_id>:weighbridge         live IoT sensor stream
-rbst:shipment:<shipment_id>             logistics tracking
+app:user:<user_id>                  personal notifications
+app:org:<org_id>:documents          team-wide events
+app:site:<site_id>:sensors          live telemetry
+app:shipment:<shipment_id>          per-entity tracking
 ```
+
+Pick a prefix per application so one hub can serve several products without
+their channels colliding.
 
 ## Client protocol
 
@@ -130,6 +201,23 @@ go mod tidy
 make run                  # or: make docker-up
 ```
 
+Then, from a browser:
+
+```ts
+import { KabarcastClient } from '@diugemi/kabarcast-client';
+
+const kabar = new KabarcastClient({
+  url: 'ws://localhost:8080',
+  getToken: () => fetch('/api/realtime/token').then(r => r.json()).then(d => d.token),
+});
+await kabar.connect();
+await kabar.subscribe('user:123');
+kabar.on('notification.created', (n) => console.log(n));
+```
+
+For production deployment behind a reverse proxy, see
+[docs/DEPLOY.md](docs/DEPLOY.md).
+
 ## Integrating from your backend
 
 Issue a channel token (Django or FastAPI, `pyjwt`):
@@ -140,7 +228,7 @@ import jwt, time
 def channel_token(user):
     return jwt.encode({
         "sub": str(user.id),
-        "channels": [f"ssap:user:{user.id}", f"ssap:company:{user.company_id}:*"],
+        "channels": [f"user:{user.id}", f"org:{user.org_id}:*"],  # "*" = prefix grant
         "exp": int(time.time()) + 300,
     }, settings.KABARCAST_CLIENT_TOKEN_SECRET, algorithm="HS256")
 ```
@@ -174,8 +262,8 @@ delivery for everyone else; the client reconnects and resumes.
 
 | Package | Location | Status |
 |---|---|---|
-| `@diugemi/kabarcast-client` (TypeScript) | [`clients/typescript`](clients/typescript) | usable |
-| `kabarcast` (Python publisher) | - | planned |
+| [`@diugemi/kabarcast-client`](https://www.npmjs.com/package/@diugemi/kabarcast-client) (TypeScript) | [`clients/typescript`](clients/typescript) | published |
+| Python publisher | - | planned |
 | Dart client (Flutter) | - | planned |
 
 The TypeScript client handles token refresh, reconnect with jittered backoff
@@ -196,6 +284,29 @@ and automatic re-subscription. See its
 - [ ] Python publisher SDK (`kabarcast`)
 - [ ] Dart client for Flutter
 - [ ] Load test to 10k concurrent connections
+
+## Documentation
+
+- [docs/DEPLOY.md](docs/DEPLOY.md) - production deployment, reverse-proxy
+  routing, and the gotchas worth knowing beforehand
+- [clients/typescript/README.md](clients/typescript/README.md) - the
+  TypeScript client
+
+## Development
+
+```bash
+go test ./... -race -cover     # hub, including Redis fan-out via miniredis
+cd clients/typescript && npm ci && npm test
+```
+
+CI runs gofmt, `go vet`, race tests, the SDK suite, and a Docker image build
+on every push and pull request.
+
+## Contributing
+
+Issues and pull requests are welcome. Please keep the test suite green; the
+fan-out and authorisation tests in particular encode guarantees the design
+depends on.
 
 ## License
 
