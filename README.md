@@ -270,20 +270,35 @@ The TypeScript client handles token refresh, reconnect with jittered backoff
 and automatic re-subscription. See its
 [README](clients/typescript/README.md).
 
-## Roadmap
+## Status and roadmap
 
-- [x] WebSocket transport, channel-scoped token auth
-- [x] Redis pub/sub fan-out across instances
-- [x] Heartbeats, slow-consumer backpressure, graceful shutdown
-- [ ] Presence (who is on a channel)
-- [ ] Short replay buffer for brief reconnects
+**Working today**
+
+- [x] WebSocket transport with channel-scoped token auth
+- [x] Redis pub/sub fan-out across instances (covered by tests)
+- [x] Heartbeats and slow-consumer backpressure
 - [x] Graceful WebSocket drain on shutdown
-- [x] CI: build, vet, gofmt, race tests, Docker build
-- [ ] Prometheus metrics endpoint
-- [x] TypeScript client SDK (`@diugemi/kabarcast-client`)
-- [ ] Python publisher SDK (`kabarcast`)
-- [ ] Dart client for Flutter
-- [ ] Load test to 10k concurrent connections
+- [x] TypeScript client SDK, [published](https://www.npmjs.com/package/@diugemi/kabarcast-client)
+- [x] CI: gofmt, vet, race tests, SDK tests, Docker build
+- [x] Running in production behind Caddy
+
+**Next**
+
+- [ ] Prometheus `/metrics` endpoint (connections, events, drops, fan-out latency)
+- [ ] Published load test to 10k concurrent connections, with the numbers
+- [ ] Python publisher SDK
+
+**Deliberately not built yet**
+
+These are real gaps, not oversights. Each waits for a use case, because
+protocol surface added speculatively is protocol surface maintained forever.
+
+- [ ] **Presence** (who is on a channel) - wanted for collaborative editing
+      indicators; nothing needs it yet
+- [ ] **Replay buffer** for brief reconnects - would add cursors and sequence
+      numbers to the protocol. Consumers whose durable copy lives in their own
+      database re-sync on reconnect anyway
+- [ ] **Dart client** for Flutter - waiting on a mobile consumer
 
 ## Documentation
 
