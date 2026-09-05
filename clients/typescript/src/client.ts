@@ -31,7 +31,7 @@ interface PendingAck {
  *   getToken: () => api.get('/realtime/token').then(r => r.data.token),
  * });
  * await kabar.connect();
- * await kabar.subscribe('ssap:user:123');
+ * await kabar.subscribe('app:user:123');
  * kabar.on('notification.created', (n) => showToast(n));
  * ```
  */

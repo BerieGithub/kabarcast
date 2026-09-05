@@ -24,7 +24,7 @@ const kabar = new KabarcastClient({
 });
 
 await kabar.connect();
-await kabar.subscribe(`ssap:user:${userId}`);
+await kabar.subscribe(`app:user:${userId}`);
 
 kabar.on('notification.created', (n) => {
   showToast(n.title);
@@ -120,7 +120,7 @@ export function useChannel<T>(channel: string, event: string, onEvent: (d: T) =>
 ```
 
 ```tsx
-useChannel<Notification>(`ssap:user:${userId}`, 'notification.created', (n) => {
+useChannel<Notification>(`app:user:${userId}`, 'notification.created', (n) => {
   queryClient.invalidateQueries({ queryKey: ['notifications'] });
 });
 ```

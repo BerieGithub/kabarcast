@@ -1,6 +1,6 @@
 /** An event broadcast by your backend and delivered to subscribers. */
 export interface KabarcastEvent<T = unknown> {
-  /** Channel the event was published to, e.g. "ssap:user:123". */
+  /** Channel the event was published to, e.g. "app:user:123". */
   channel: string;
   /** Event name, e.g. "notification.created". */
   event: string;

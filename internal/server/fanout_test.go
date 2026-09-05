@@ -64,7 +64,7 @@ func TestRedisFanoutAcrossInstances(t *testing.T) {
 	// anything is published, otherwise the event races the subscribe.
 	time.Sleep(150 * time.Millisecond)
 
-	const channel = "ssap:company:7:assessments"
+	const channel = "app:org:7:documents"
 
 	c := dial(t, holder.srv, signToken(t, []string{channel}))
 	defer c.Close()
@@ -75,7 +75,7 @@ func TestRedisFanoutAcrossInstances(t *testing.T) {
 	}
 
 	// Publish to A. The client is on B.
-	body := `{"channel":"` + channel + `","event":"assessment.verified","data":{"id":42}}`
+	body := `{"channel":"` + channel + `","event":"document.updated","data":{"id":42}}`
 	req, _ := http.NewRequest(http.MethodPost, publisher.srv.URL+"/v1/publish", bytes.NewBufferString(body))
 	req.Header.Set("Authorization", "Bearer "+serviceSecret)
 	req.Header.Set("Content-Type", "application/json")
@@ -89,7 +89,7 @@ func TestRedisFanoutAcrossInstances(t *testing.T) {
 	}
 
 	got := readJSON(t, c)
-	if got["event"] != "assessment.verified" {
+	if got["event"] != "document.updated" {
 		t.Fatalf("event did not cross instances: %v", got)
 	}
 	if got["channel"] != channel {
@@ -110,7 +110,7 @@ func TestRedisFanoutDeliversOnce(t *testing.T) {
 	inst := newInstance(t, ctx, redisURL)
 	time.Sleep(150 * time.Millisecond)
 
-	const channel = "ssap:user:1"
+	const channel = "app:user:1"
 	c := dial(t, inst.srv, signToken(t, []string{channel}))
 	defer c.Close()
 

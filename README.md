@@ -126,13 +126,13 @@ Two separate credentials, deliberately:
 | Your backends | **Service secret** (bearer) | Publishing to any channel |
 
 The channel token is what enforces tenant isolation. A user's token names the
-channels they may join, so a grower can never subscribe to another company's
+channels they may join, so a user can never subscribe to another tenant's
 channel no matter what their client sends.
 
 ```json
 {
   "sub": "user-uuid",
-  "channels": ["ssap:user:<uuid>", "ssap:company:<uuid>:*"],
+  "channels": ["app:user:<uuid>", "app:org:<uuid>:*"],
   "exp": 1735689600
 }
 ```
@@ -159,17 +159,17 @@ their channels colliding.
 Client to server:
 
 ```json
-{"action": "subscribe",   "channel": "ssap:user:123"}
-{"action": "unsubscribe", "channel": "ssap:user:123"}
+{"action": "subscribe",   "channel": "app:user:123"}
+{"action": "unsubscribe", "channel": "app:user:123"}
 {"action": "ping"}
 ```
 
 Server to client:
 
 ```json
-{"type": "ack",   "action": "subscribe", "channel": "ssap:user:123"}
+{"type": "ack",   "action": "subscribe", "channel": "app:user:123"}
 {"type": "error", "message": "not authorized for this channel"}
-{"channel": "ssap:user:123", "event": "notification.created",
+{"channel": "app:user:123", "event": "notification.created",
  "data": {"...": "..."}, "ts": 1735689600123}
 ```
 
@@ -187,7 +187,7 @@ POST /v1/publish  broadcast an event (Authorization: Bearer <service secret>)
 curl -X POST http://localhost:8080/v1/publish \
   -H "Authorization: Bearer $KABARCAST_SERVICE_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"channel":"ssap:user:123","event":"notification.created","data":{"title":"Remediation verified"}}'
+  -d '{"channel":"app:user:123","event":"notification.created","data":{"title":"Report ready"}}'
 ```
 
 `202 Accepted` means the event was accepted for delivery. Delivery is

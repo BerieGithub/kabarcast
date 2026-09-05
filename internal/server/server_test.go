@@ -100,17 +100,17 @@ func TestSubscribeAuthorization(t *testing.T) {
 	defer srv.Close()
 
 	// Token grants only this user's own channel.
-	c := dial(t, srv, signToken(t, []string{"ssap:user:1"}))
+	c := dial(t, srv, signToken(t, []string{"app:user:1"}))
 	defer c.Close()
 
 	// Allowed channel -> ack
-	_ = c.WriteJSON(map[string]string{"action": "subscribe", "channel": "ssap:user:1"})
+	_ = c.WriteJSON(map[string]string{"action": "subscribe", "channel": "app:user:1"})
 	if got := readJSON(t, c); got["type"] != "ack" {
 		t.Fatalf("want ack, got %v", got)
 	}
 
 	// Another tenant's channel -> refused. This is the isolation guarantee.
-	_ = c.WriteJSON(map[string]string{"action": "subscribe", "channel": "ssap:user:2"})
+	_ = c.WriteJSON(map[string]string{"action": "subscribe", "channel": "app:user:2"})
 	got := readJSON(t, c)
 	if got["type"] != "error" {
 		t.Fatalf("expected error for unauthorized channel, got %v", got)
@@ -122,15 +122,15 @@ func TestWildcardGrantAndDelivery(t *testing.T) {
 	defer srv.Close()
 
 	// Prefix grant covers the whole company namespace.
-	c := dial(t, srv, signToken(t, []string{"ssap:company:7:*"}))
+	c := dial(t, srv, signToken(t, []string{"app:org:7:*"}))
 	defer c.Close()
 
-	_ = c.WriteJSON(map[string]string{"action": "subscribe", "channel": "ssap:company:7:assessments"})
+	_ = c.WriteJSON(map[string]string{"action": "subscribe", "channel": "app:org:7:documents"})
 	if got := readJSON(t, c); got["type"] != "ack" {
 		t.Fatalf("want ack for wildcard grant, got %v", got)
 	}
 
-	body := `{"channel":"ssap:company:7:assessments","event":"assessment.verified","data":{"id":42}}`
+	body := `{"channel":"app:org:7:documents","event":"document.updated","data":{"id":42}}`
 	req, _ := http.NewRequest(http.MethodPost, srv.URL+"/v1/publish", bytes.NewBufferString(body))
 	req.Header.Set("Authorization", "Bearer "+serviceSecret)
 	req.Header.Set("Content-Type", "application/json")
@@ -144,7 +144,7 @@ func TestWildcardGrantAndDelivery(t *testing.T) {
 	}
 
 	got := readJSON(t, c)
-	if got["event"] != "assessment.verified" || got["channel"] != "ssap:company:7:assessments" {
+	if got["event"] != "document.updated" || got["channel"] != "app:org:7:documents" {
 		t.Fatalf("unexpected event delivered: %v", got)
 	}
 }

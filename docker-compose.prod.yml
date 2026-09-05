@@ -28,4 +28,4 @@ services:
 networks:
   proxy:
     external: true
-    name: ${KABARCAST_NETWORK:-ssap-v2_ssap-network}
+    name: ${KABARCAST_NETWORK:?set to your proxy's docker network}

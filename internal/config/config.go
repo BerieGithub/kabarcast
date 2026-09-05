@@ -10,7 +10,7 @@ import (
 type Config struct {
 	Addr string
 
-	// ClientTokenSecret is the HMAC secret your applications (SSAP, RBST)
+	// ClientTokenSecret is the HMAC secret your applications
 	// use to sign short-lived channel tokens. The hub only VERIFIES these
 	// signatures, which is what keeps it decoupled from your databases.
 	ClientTokenSecret string

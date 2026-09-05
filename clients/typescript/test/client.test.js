@@ -69,16 +69,16 @@ test('subscribes and receives a broadcast event', async () => {
   });
 
   await client.connect();
-  await client.subscribe('ssap:user:1');
+  await client.subscribe('app:user:1');
 
   const received = [];
   client.on('notification.created', (data, meta) => received.push({ data, meta }));
 
-  hub.broadcast('ssap:user:1', 'notification.created', { title: 'hello' });
+  hub.broadcast('app:user:1', 'notification.created', { title: 'hello' });
 
   assert.ok(await waitFor(() => received.length > 0), 'event was not delivered');
   assert.equal(received[0].data.title, 'hello');
-  assert.equal(received[0].meta.channel, 'ssap:user:1');
+  assert.equal(received[0].meta.channel, 'app:user:1');
 
   client.close();
   await hub.close();
@@ -95,7 +95,7 @@ test('reconnects and restores subscriptions automatically', async () => {
   });
 
   await client.connect();
-  await client.subscribe('ssap:company:7:assessments');
+  await client.subscribe('app:org:7:documents');
   assert.equal(hub.state.subscribes.length, 1);
 
   // Simulate the hub restarting underneath the client.
@@ -107,16 +107,16 @@ test('reconnects and restores subscriptions automatically', async () => {
     await waitFor(() => hub.state.subscribes.length >= 2),
     'client did not re-subscribe after reconnect',
   );
-  assert.equal(hub.state.subscribes[1], 'ssap:company:7:assessments');
+  assert.equal(hub.state.subscribes[1], 'app:org:7:documents');
 
   // A fresh token is fetched per attempt, so an expired one cannot wedge it.
   assert.ok(tokenCalls >= 2, 'token was not refreshed on reconnect');
 
   // And delivery works again on the new connection.
   const received = [];
-  client.on('assessment.verified', (d) => received.push(d));
+  client.on('document.updated', (d) => received.push(d));
   await waitFor(() => hub.state.sockets.size > 0);
-  hub.broadcast('ssap:company:7:assessments', 'assessment.verified', { id: 42 });
+  hub.broadcast('app:org:7:documents', 'document.updated', { id: 42 });
   assert.ok(await waitFor(() => received.length > 0), 'no delivery after reconnect');
 
   client.close();
@@ -171,7 +171,7 @@ test('a refused subscribe rejects and is not retried on reconnect', async () => 
   await client.connect();
 
   await assert.rejects(
-    () => client.subscribe('ssap:user:someone-else'),
+    () => client.subscribe('app:user:someone-else'),
     /not authorized/,
     'expected a refused subscribe to reject',
   );

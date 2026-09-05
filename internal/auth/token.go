@@ -27,7 +27,7 @@ var (
 //
 //	{
 //	  "sub": "user-uuid",
-//	  "channels": ["ssap:user:<id>", "ssap:company:<id>:*"],
+//	  "channels": ["app:user:<id>", "app:org:<id>:*"],
 //	  "exp": 1735689600
 //	}
 //
